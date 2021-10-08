@@ -1,4 +1,4 @@
-package com.hypnotriod.utils;
+package com.hypnotriod.chordguesser.utils;
 
 public class NotesUtil {
     public static final String[] NOTES = new String[]{"A", "A#", "B", "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#"};
@@ -11,7 +11,7 @@ public class NotesUtil {
 
     public static String getNoteCentsByFrequency(double frequency) {
         double noteIndex = getNoteIndexRaw(frequency);
-        int cents = (int) Math.round((noteIndex - (int) noteIndex) * 100);
+        int cents = (int) Math.floor((noteIndex - (int) noteIndex) * 100);
         return cents > 0 ? "+" + cents : "" + cents;
     }
 

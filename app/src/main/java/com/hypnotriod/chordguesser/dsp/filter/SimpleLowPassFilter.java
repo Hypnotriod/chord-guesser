@@ -1,4 +1,4 @@
-package com.hypnotriod.utils;
+package com.hypnotriod.chordguesser.dsp.filter;
 
 public class SimpleLowPassFilter {
     double coefficient;

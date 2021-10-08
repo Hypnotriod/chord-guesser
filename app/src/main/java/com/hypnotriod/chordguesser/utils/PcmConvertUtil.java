@@ -1,4 +1,4 @@
-package com.hypnotriod.utils;
+package com.hypnotriod.chordguesser.utils;
 
 public class PcmConvertUtil {
     public static double[] convert16BitMono(byte[] data) {

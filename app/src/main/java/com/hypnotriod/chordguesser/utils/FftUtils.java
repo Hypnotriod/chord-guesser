@@ -1,4 +1,4 @@
-package com.hypnotriod.utils;
+package com.hypnotriod.chordguesser.utils;
 
 public class FftUtils {
     public static void fillPow(double[] real, double[] imaginary, double[] pow) {
@@ -39,7 +39,7 @@ public class FftUtils {
         double peak;
         int i;
 
-        for (i = 1; i <= pow.length / 4 && currIndex < frequencies.length; i++) {
+        for (i = 1; i <= pow.length / 2 && currIndex < frequencies.length; i++) {
             if (vm < pow[i]) {
                 vm = pow[i];
                 vmn = normPow[i];
