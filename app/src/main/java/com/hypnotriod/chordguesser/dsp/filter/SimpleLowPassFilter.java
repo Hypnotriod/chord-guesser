@@ -6,7 +6,7 @@ public class SimpleLowPassFilter {
 
     public SimpleLowPassFilter(double coefficient) {
         if (coefficient < 0 || coefficient > 1)
-            throw new Error("Coefficient must not be less than 0 or more than 1");
+            throw new Error("Coefficient must not be less than 0 or not more than 1");
         this.coefficient = 1 - coefficient;
     }
 

@@ -63,9 +63,9 @@ public class Filter {
         m_Fx = Fx;
         m_lambda = Math.PI * Fx / (Fs / 2);
 
-        if (Fs <= 0) throw new Error("Frequency must not be less than or equal to 0");
+        if (Fs <= 0) throw new Error("Sample rate must not be less than or equal to 0");
         if (Fx <= 0 || Fx >= Fs / 2)
-            throw new Error("Frequency must not be less than or equal to 0");
+            throw new Error("Frequency must not be less than or equal to 0 and less than Nyquist frequency");
         if (m_num_taps <= 0) throw new Error("Taps number must not be less than or equal to 0");
 
         m_taps = new double[m_num_taps];
@@ -87,11 +87,11 @@ public class Filter {
         m_lambda = Math.PI * Fl / (Fs / 2);
         m_phi = Math.PI * Fu / (Fs / 2);
 
-        if (Fs <= 0) throw new Error("Frequency must not be less than or equal to 0");
+        if (Fs <= 0) throw new Error("Sample rate must not be less than or equal to 0");
         if (Fl <= 0 || Fl >= Fs / 2)
-            throw new Error("Frequency must not be less than or equal to 0");
+            throw new Error("Bottom frequency must not be less than or equal to 0 and less than Nyquist frequency");
         if (Fu <= 0 || Fu >= Fs / 2)
-            throw new Error("Frequency must not be less than or equal to 0");
+            throw new Error("Top frequency must not be less than or equal to 0 and less than Nyquist frequency");
         if (m_num_taps <= 0) throw new Error("Taps number must not be less than or equal to 0");
 
         m_taps = new double[m_num_taps];
