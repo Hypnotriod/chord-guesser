@@ -1,4 +1,4 @@
-package com.hypnotriod.chordguesser.utils;
+package com.hypnotriod.chordguesser.dsp.utils;
 
 public class NotesUtil {
     public static final String[] NOTES = new String[]{"A", "A#", "B", "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#"};

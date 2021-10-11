@@ -1,4 +1,4 @@
-package com.hypnotriod.chordguesser.utils;
+package com.hypnotriod.chordguesser.dsp.utils;
 
 public class FftUtils {
     public static void fillPow(double[] real, double[] imaginary, double[] pow) {
@@ -13,13 +13,6 @@ public class FftUtils {
         double p = 1.0 / (Math.log(pow.length) / Math.log(2));
         for (i = 0; i < pow.length; i++) {
             normPow[i] = Math.sqrt(pow[i]) * p;
-        }
-    }
-
-    public static void hannWindow(double[] data) {
-        for (int i = 0; i < data.length; i++) {
-            double multiplier = 0.5f * (1 - Math.cos(2 * Math.PI * i / (data.length - 1)));
-            data[i] = multiplier * data[i];
         }
     }
 
