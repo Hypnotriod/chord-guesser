@@ -44,6 +44,11 @@ public class Dsp {
     private final List<Queue<Double>> freqBuffList = new ArrayList<>();
     private final HannWindow hannWindow = new HannWindow(CHUNK_SIZE);
 
+    private final double[] real = new double[CHUNK_SIZE];
+    private final double[] imaginary = new double[CHUNK_SIZE];
+    private final double[] pow = new double[CHUNK_SIZE];
+    private final double[] normPow = new double[CHUNK_SIZE];
+
     public Dsp(DspResultViewer resultViewer) {
         this.resultViewer = resultViewer;
         for (int i = 0; i < FREQUENCIES_MAX; i++) {
@@ -70,11 +75,8 @@ public class Dsp {
     }
 
     private void processDsp(byte[] data) {
-        double[] real = PcmConvertUtil.convert16BitMono(data);
-        double[] imaginary = new double[CHUNK_SIZE];
-        double[] pow = new double[CHUNK_SIZE];
-        double[] normPow = new double[CHUNK_SIZE];
-
+        PcmConvertUtil.convert16BitMono(data, real);
+        Arrays.fill(imaginary, 0);
         bpFilter.process(real);
         hannWindow.process(real);
         fft.fft(real, imaginary);

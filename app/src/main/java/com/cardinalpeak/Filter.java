@@ -97,7 +97,7 @@ public class Filter {
         if (m_num_taps <= 0) throw new Error("Taps number must not be less than or equal to 0");
 
         m_taps = new double[m_num_taps];
-        m_sr = new double[m_num_taps + m_chunk_size];
+        m_sr = new double[m_num_taps + m_chunk_size - 1];
 
         init();
 
@@ -120,6 +120,10 @@ public class Filter {
 
     public void extractTaps(double[] taps) {
         System.arraycopy(m_taps, 0, taps, 0, m_num_taps);
+    }
+
+    protected void init() {
+        Arrays.fill(m_sr, 0);
     }
 
     protected void designLPF() {
@@ -151,9 +155,5 @@ public class Filter {
             else m_taps[n] = (Math.sin(mm * m_phi) -
                     Math.sin(mm * m_lambda)) / (mm * Math.PI);
         }
-    }
-
-    protected void init() {
-        Arrays.fill(m_sr, 0);
     }
 }
