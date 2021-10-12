@@ -39,6 +39,8 @@
 
 package com.cardinalpeak;
 
+import java.util.Arrays;
+
 public class Filter {
     public enum FilterType {
         LPF,
@@ -46,8 +48,8 @@ public class Filter {
         BPF
     }
 
-    FilterType m_filt_t;
     int m_num_taps;
+    int m_chunk_size;
     double m_Fs;
     double m_Fx;
     double m_Fu;
@@ -56,9 +58,9 @@ public class Filter {
     double[] m_taps;
     double[] m_sr;
 
-    public Filter(FilterType filt_t, int num_taps, double Fs, double Fx) {
-        m_filt_t = filt_t;
+    public Filter(FilterType type, int num_taps, int chunk_size, double Fs, double Fx) {
         m_num_taps = num_taps;
+        m_chunk_size = chunk_size;
         m_Fs = Fs;
         m_Fx = Fx;
         m_lambda = Math.PI * Fx / (Fs / 2);
@@ -69,18 +71,18 @@ public class Filter {
         if (m_num_taps <= 0) throw new Error("Taps number must not be less than or equal to 0");
 
         m_taps = new double[m_num_taps];
-        m_sr = new double[m_num_taps];
+        m_sr = new double[m_num_taps + m_chunk_size];
 
         init();
 
-        if (m_filt_t == FilterType.LPF) designLPF();
-        else if (m_filt_t == FilterType.HPF) designHPF();
+        if (type == FilterType.LPF) designLPF();
+        else if (type == FilterType.HPF) designHPF();
         else throw new Error("Only LPF or HPF types are supported");
     }
 
-    public Filter(FilterType filt_t, int num_taps, double Fs, double Fl, double Fu) {
-        m_filt_t = filt_t;
+    public Filter(FilterType type, int num_taps, int chunk_size, double Fs, double Fl, double Fu) {
         m_num_taps = num_taps;
+        m_chunk_size = chunk_size;
         m_Fs = Fs;
         m_Fx = Fl;
         m_Fu = Fu;
@@ -95,32 +97,25 @@ public class Filter {
         if (m_num_taps <= 0) throw new Error("Taps number must not be less than or equal to 0");
 
         m_taps = new double[m_num_taps];
-        m_sr = new double[m_num_taps];
+        m_sr = new double[m_num_taps + m_chunk_size];
 
         init();
 
-        if (m_filt_t == FilterType.BPF) designBPF();
+        if (type == FilterType.BPF) designBPF();
         else throw new Error("Only BPF type is supported");
     }
 
     public void process(double[] data) {
-        for (int i = 0; i < data.length; i++) {
-            data[i] = processSample(data[i]);
-        }
-    }
-
-    public double processSample(double data_sample) {
         double result;
-
-        System.arraycopy(m_sr, 0, m_sr, 1, m_num_taps - 1);
-        m_sr[0] = data_sample;
-
-        result = 0;
-        for (int i = 0; i < m_num_taps; i++) {
-            result += m_sr[i] * m_taps[i];
+        for (int i = m_chunk_size - 1, j = 0; i >= 0; i--, j++) {
+            m_sr[i] = data[j];
+            result = 0;
+            for (int k = 0; k < m_num_taps; k++) {
+                result += m_sr[i + k] * m_taps[k];
+            }
+            data[j] = result;
         }
-
-        return result;
+        System.arraycopy(m_sr, 0, m_sr, m_chunk_size, m_sr.length - m_chunk_size);
     }
 
     public void extractTaps(double[] taps) {
@@ -159,6 +154,6 @@ public class Filter {
     }
 
     protected void init() {
-        for (int i = 0; i < m_num_taps; i++) m_sr[i] = 0;
+        Arrays.fill(m_sr, 0);
     }
 }

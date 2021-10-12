@@ -24,7 +24,7 @@ public class Dsp {
     public static final int AUDIO_FORMAT = AudioFormat.ENCODING_PCM_16BIT;
     public static final int MIN_INTERNAL_BUFFER_SIZE = AudioRecord.getMinBufferSize(SAMPLE_RATE, CHANNEL_CONFIG, AUDIO_FORMAT);
     public static final int BUFFER_SIZE = Math.max(MIN_INTERNAL_BUFFER_SIZE, 2048);
-    public static final int TAPS_NUM = BUFFER_SIZE / 2;
+    public static final int CHUNK_SIZE = BUFFER_SIZE / 2;
     public static final double THRESHOLD = 0.1;
     public static final int FREQUENCIES_MAX = 4;
     public static final int MOVING_AVERAGE_FREQUENCIES_MAX = 8;
@@ -39,10 +39,10 @@ public class Dsp {
     private final DspResult dspResult = new DspResult();
 
     private AudioRecord audioRecord;
-    private final Fft fft = new Fft(TAPS_NUM);
-    private final Filter bpFilter = new Filter(Filter.FilterType.BPF, BAND_PASS_TAPS_NUM, SAMPLE_RATE, BAND_PASS_BOTTOM, BAND_PASS_TOP);
+    private final Fft fft = new Fft(CHUNK_SIZE);
+    private final Filter bpFilter = new Filter(Filter.FilterType.BPF, BAND_PASS_TAPS_NUM, CHUNK_SIZE, SAMPLE_RATE, BAND_PASS_BOTTOM, BAND_PASS_TOP);
     private final List<Queue<Double>> freqBuffList = new ArrayList<>();
-    private final HannWindow hannWindow = new HannWindow(TAPS_NUM);
+    private final HannWindow hannWindow = new HannWindow(CHUNK_SIZE);
 
     public Dsp(DspResultViewer resultViewer) {
         this.resultViewer = resultViewer;
@@ -71,9 +71,9 @@ public class Dsp {
 
     private void processDsp(byte[] data) {
         double[] real = PcmConvertUtil.convert16BitMono(data);
-        double[] imaginary = new double[TAPS_NUM];
-        double[] pow = new double[TAPS_NUM];
-        double[] normPow = new double[TAPS_NUM];
+        double[] imaginary = new double[CHUNK_SIZE];
+        double[] pow = new double[CHUNK_SIZE];
+        double[] normPow = new double[CHUNK_SIZE];
 
         bpFilter.process(real);
         hannWindow.process(real);
