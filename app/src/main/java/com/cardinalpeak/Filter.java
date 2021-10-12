@@ -48,30 +48,23 @@ public class Filter {
         BPF
     }
 
-    int m_num_taps;
-    int m_chunk_size;
-    double m_Fs;
-    double m_Fx;
-    double m_Fu;
-    double m_phi;
-    double m_lambda;
-    double[] m_taps;
-    double[] m_sr;
+    int tapsNum;
+    int chunkSize;
+    double phi;
+    double lambda;
+    double[] taps;
+    double[] buffer;
 
-    public Filter(FilterType type, int num_taps, int chunk_size, double Fs, double Fx) {
-        m_num_taps = num_taps;
-        m_chunk_size = chunk_size;
-        m_Fs = Fs;
-        m_Fx = Fx;
-        m_lambda = Math.PI * Fx / (Fs / 2);
+    public Filter(FilterType type, int tapsNum, int chunkSize, double sampleRate, double frequency) {
+        this.tapsNum = tapsNum;
+        this.chunkSize = chunkSize;
+        lambda = Math.PI * frequency / (sampleRate / 2);
 
-        if (Fs <= 0) throw new Error("Sample rate must not be less than or equal to 0");
-        if (Fx <= 0 || Fx >= Fs / 2)
+        if (sampleRate <= 0) throw new Error("Sample rate must not be less than or equal to 0");
+        if (frequency <= 0 || frequency >= sampleRate / 2)
             throw new Error("Frequency must not be less than or equal to 0 and less than Nyquist frequency");
-        if (m_num_taps <= 0) throw new Error("Taps number must not be less than or equal to 0");
-
-        m_taps = new double[m_num_taps];
-        m_sr = new double[m_num_taps + m_chunk_size];
+        if (tapsNum <= 0) throw new Error("Taps number must not be less than or equal to 0");
+        if (chunkSize <= 0) throw new Error("Chunk size must not be less than or equal to 0");
 
         init();
 
@@ -80,24 +73,19 @@ public class Filter {
         else throw new Error("Only LPF or HPF types are supported");
     }
 
-    public Filter(FilterType type, int num_taps, int chunk_size, double Fs, double Fl, double Fu) {
-        m_num_taps = num_taps;
-        m_chunk_size = chunk_size;
-        m_Fs = Fs;
-        m_Fx = Fl;
-        m_Fu = Fu;
-        m_lambda = Math.PI * Fl / (Fs / 2);
-        m_phi = Math.PI * Fu / (Fs / 2);
+    public Filter(FilterType type, int tapsNum, int chunkSize, double sampleRate, double frequencyBottom, double frequencyTop) {
+        this.tapsNum = tapsNum;
+        this.chunkSize = chunkSize;
+        lambda = Math.PI * frequencyBottom / (sampleRate / 2);
+        phi = Math.PI * frequencyTop / (sampleRate / 2);
 
-        if (Fs <= 0) throw new Error("Sample rate must not be less than or equal to 0");
-        if (Fl <= 0 || Fl >= Fs / 2)
+        if (sampleRate <= 0) throw new Error("Sample rate must not be less than or equal to 0");
+        if (frequencyBottom <= 0 || frequencyBottom >= sampleRate / 2)
             throw new Error("Bottom frequency must not be less than or equal to 0 and less than Nyquist frequency");
-        if (Fu <= 0 || Fu >= Fs / 2)
+        if (frequencyTop <= 0 || frequencyTop >= sampleRate / 2)
             throw new Error("Top frequency must not be less than or equal to 0 and less than Nyquist frequency");
-        if (m_num_taps <= 0) throw new Error("Taps number must not be less than or equal to 0");
-
-        m_taps = new double[m_num_taps];
-        m_sr = new double[m_num_taps + m_chunk_size - 1];
+        if (tapsNum <= 0) throw new Error("Taps number must not be less than or equal to 0");
+        if (chunkSize <= 0) throw new Error("Chunk size must not be less than or equal to 0");
 
         init();
 
@@ -107,53 +95,55 @@ public class Filter {
 
     public void process(double[] data) {
         double result;
-        for (int i = m_chunk_size - 1, j = 0; i >= 0; i--, j++) {
-            m_sr[i] = data[j];
+        for (int i = chunkSize - 1, j = 0; i >= 0; i--, j++) {
+            buffer[i] = data[j];
             result = 0;
-            for (int k = 0; k < m_num_taps; k++) {
-                result += m_sr[i + k] * m_taps[k];
+            for (int k = 0; k < tapsNum; k++) {
+                result += buffer[i + k] * taps[k];
             }
             data[j] = result;
         }
-        System.arraycopy(m_sr, 0, m_sr, m_chunk_size, m_sr.length - m_chunk_size);
+        System.arraycopy(buffer, 0, buffer, chunkSize, buffer.length - chunkSize);
     }
 
     public void extractTaps(double[] taps) {
-        System.arraycopy(m_taps, 0, taps, 0, m_num_taps);
+        System.arraycopy(this.taps, 0, taps, 0, tapsNum);
     }
 
     protected void init() {
-        Arrays.fill(m_sr, 0);
+        taps = new double[tapsNum];
+        buffer = new double[tapsNum + chunkSize - 1];
+        Arrays.fill(buffer, 0);
     }
 
     protected void designLPF() {
         double mm;
 
-        for (int n = 0; n < m_num_taps; n++) {
-            mm = n - (m_num_taps - 1.0) / 2.0;
-            if (mm == 0.0) m_taps[n] = m_lambda / Math.PI;
-            else m_taps[n] = Math.sin(mm * m_lambda) / (mm * Math.PI);
+        for (int n = 0; n < tapsNum; n++) {
+            mm = n - (tapsNum - 1.0) / 2.0;
+            if (mm == 0.0) taps[n] = lambda / Math.PI;
+            else taps[n] = Math.sin(mm * lambda) / (mm * Math.PI);
         }
     }
 
     protected void designHPF() {
         double mm;
 
-        for (int n = 0; n < m_num_taps; n++) {
-            mm = n - (m_num_taps - 1.0) / 2.0;
-            if (mm == 0.0) m_taps[n] = 1.0 - m_lambda / Math.PI;
-            else m_taps[n] = -Math.sin(mm * m_lambda) / (mm * Math.PI);
+        for (int n = 0; n < tapsNum; n++) {
+            mm = n - (tapsNum - 1.0) / 2.0;
+            if (mm == 0.0) taps[n] = 1.0 - lambda / Math.PI;
+            else taps[n] = -Math.sin(mm * lambda) / (mm * Math.PI);
         }
     }
 
     protected void designBPF() {
         double mm;
 
-        for (int n = 0; n < m_num_taps; n++) {
-            mm = n - (m_num_taps - 1.0) / 2.0;
-            if (mm == 0.0) m_taps[n] = (m_phi - m_lambda) / Math.PI;
-            else m_taps[n] = (Math.sin(mm * m_phi) -
-                    Math.sin(mm * m_lambda)) / (mm * Math.PI);
+        for (int n = 0; n < tapsNum; n++) {
+            mm = n - (tapsNum - 1.0) / 2.0;
+            if (mm == 0.0) taps[n] = (phi - lambda) / Math.PI;
+            else taps[n] = (Math.sin(mm * phi) -
+                    Math.sin(mm * lambda)) / (mm * Math.PI);
         }
     }
 }
