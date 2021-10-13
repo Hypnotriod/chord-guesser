@@ -53,7 +53,7 @@ public class FftUtils {
                         + vm1 / vm * ncoef
                         + vm2 / vm * ncoef * 2
                         + vm3 / vm * ncoef * 3;
-                frequency *= ((double) sampleRate / (double) (pow.length / 2));
+                frequency *= ((double) sampleRate / (double) pow.length);
 
                 peak = (1 - Math.cos((Math.PI / 2) * (frequency - fm))) * normPow[i] / 2 + normPow[i];
 
