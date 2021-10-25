@@ -81,8 +81,8 @@ public class FftUtils {
                 f = factor;
                 root = frequencies[i];
                 while (d-- > 0) {
-                    if (Math.round(frequencies[j]) == Math.round(root)) {
-                        peaks[j] *= f;
+                    if (Math.round(frequencies[j] / 2) == Math.round(root / 2)) {
+                        peaks[j] -= peaks[j] * f;
                     }
                     root += frequencies[i];
                     f /= 2;
