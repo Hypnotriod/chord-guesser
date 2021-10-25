@@ -6,6 +6,7 @@ import android.media.MediaRecorder;
 
 import com.cardinalpeak.Filter;
 import com.hypnotriod.chordguesser.dsp.filter.HannWindow;
+import com.hypnotriod.chordguesser.dsp.utils.DspUtils;
 import com.hypnotriod.chordguesser.dsp.utils.FftUtils;
 import com.hypnotriod.chordguesser.dsp.utils.NotesUtil;
 import com.hypnotriod.chordguesser.dsp.utils.PcmConvertUtil;
@@ -26,15 +27,18 @@ public class Dsp {
     public static final int BUFFER_SIZE = Math.max(MIN_INTERNAL_BUFFER_SIZE, 2048);
     public static final int CHUNK_SIZE = BUFFER_SIZE / 2;
     public static final double THRESHOLD = 0.1;
-    public static final int FREQUENCIES_MAX = 4;
+    public static final int FREQUENCIES_FUNDAMENTAL_NUM = 4;
     public static final int FREQUENCIES_TO_ANALYZE_NUM = 32;
     public static final int MOVING_AVERAGE_FREQUENCIES_MAX = 8;
     public static final int MOVING_AVERAGE_WINDOW_START = (MOVING_AVERAGE_FREQUENCIES_MAX / 4);
     public static final int MOVING_AVERAGE_WINDOW_END = (MOVING_AVERAGE_FREQUENCIES_MAX / 4) * 3;
     public static final int MOVING_AVERAGE_WINDOW_SIZE = (MOVING_AVERAGE_FREQUENCIES_MAX / 2);
     public static final int BAND_PASS_TAPS_NUM = 51;
-    public static final double BAND_PASS_TOP = 3000;
-    public static final double BAND_PASS_BOTTOM = 30;
+    public static final double BAND_PASS_TOP = 2000;
+    public static final double BAND_PASS_BOTTOM = 20;
+    public static final double SUPPRESS_HARMONICS_FACTOR = 1;
+    public static final double SUPPRESS_HARMONICS_FADE = 0.75;
+    public static final int SUPPRESS_HARMONICS_DEEP = 3;
 
     private final DspResultViewer resultViewer;
     private final DspResult dspResult = new DspResult();
@@ -52,7 +56,7 @@ public class Dsp {
 
     public Dsp(DspResultViewer resultViewer) {
         this.resultViewer = resultViewer;
-        for (int i = 0; i < FREQUENCIES_MAX; i++) {
+        for (int i = 0; i < FREQUENCIES_FUNDAMENTAL_NUM; i++) {
             freqBuffList.add(new LinkedList<>());
         }
         Arrays.fill(dspResult.frequencies, "");
@@ -86,9 +90,14 @@ public class Dsp {
 
         double[] frequencies = new double[FREQUENCIES_TO_ANALYZE_NUM];
         double[] peaks = new double[FREQUENCIES_TO_ANALYZE_NUM];
+        double[] frequenciesFundamental = new double[FREQUENCIES_FUNDAMENTAL_NUM];
+        double[] peaksFundamental = new double[FREQUENCIES_FUNDAMENTAL_NUM];
 
         FftUtils.fillFrequencies(pow, normPow, frequencies, peaks, SAMPLE_RATE, THRESHOLD);
-        processNextFrequencies(frequencies, peaks);
+        DspUtils.suppressHarmonics(frequencies, peaks, SUPPRESS_HARMONICS_FACTOR, SUPPRESS_HARMONICS_FADE, SUPPRESS_HARMONICS_DEEP, THRESHOLD);
+        DspUtils.fillFundamental(frequenciesFundamental, peaksFundamental, frequencies, peaks);
+        DspUtils.selectionSort(frequenciesFundamental, peaksFundamental);
+        processNextFrequencies(frequenciesFundamental, peaksFundamental);
         resultViewer.update(dspResult);
     }
 
