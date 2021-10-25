@@ -27,13 +27,14 @@ public class Dsp {
     public static final int CHUNK_SIZE = BUFFER_SIZE / 2;
     public static final double THRESHOLD = 0.1;
     public static final int FREQUENCIES_MAX = 4;
+    public static final int FREQUENCIES_TO_ANALYZE_NUM = 32;
     public static final int MOVING_AVERAGE_FREQUENCIES_MAX = 8;
     public static final int MOVING_AVERAGE_WINDOW_START = (MOVING_AVERAGE_FREQUENCIES_MAX / 4);
     public static final int MOVING_AVERAGE_WINDOW_END = (MOVING_AVERAGE_FREQUENCIES_MAX / 4) * 3;
     public static final int MOVING_AVERAGE_WINDOW_SIZE = (MOVING_AVERAGE_FREQUENCIES_MAX / 2);
     public static final int BAND_PASS_TAPS_NUM = 51;
     public static final double BAND_PASS_TOP = 3000;
-    public static final double BAND_PASS_BOTTOM = 100;
+    public static final double BAND_PASS_BOTTOM = 30;
 
     private final DspResultViewer resultViewer;
     private final DspResult dspResult = new DspResult();
@@ -83,8 +84,8 @@ public class Dsp {
         FftUtils.fillPow(real, imaginary, pow);
         FftUtils.fillNormalizedPow(pow, normPow);
 
-        double[] frequencies = new double[FREQUENCIES_MAX];
-        double[] peaks = new double[FREQUENCIES_MAX];
+        double[] frequencies = new double[FREQUENCIES_TO_ANALYZE_NUM];
+        double[] peaks = new double[FREQUENCIES_TO_ANALYZE_NUM];
 
         FftUtils.fillFrequencies(pow, normPow, frequencies, peaks, SAMPLE_RATE, THRESHOLD);
         processNextFrequencies(frequencies, peaks);

@@ -66,4 +66,28 @@ public class FftUtils {
             }
         }
     }
+
+    public static void suppressHarmonics(double[] frequencies, double[] peaks, double factor, int deep, double threshold) {
+        double root;
+        int d;
+        double f;
+        for (int i = 0; i < frequencies.length; i++) {
+            if (peaks[i] < threshold) {
+                peaks[i] = 0;
+                continue;
+            }
+            for (int j = i; j < frequencies.length; j++) {
+                d = deep;
+                f = factor;
+                root = frequencies[i];
+                while (d-- > 0) {
+                    if (Math.round(frequencies[j]) == Math.round(root)) {
+                        peaks[j] *= f;
+                    }
+                    root += frequencies[i];
+                    f /= 2;
+                }
+            }
+        }
+    }
 }
