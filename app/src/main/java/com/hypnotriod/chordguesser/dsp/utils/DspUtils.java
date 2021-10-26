@@ -9,7 +9,7 @@ public class DspUtils {
         double root;
         int d;
         double f;
-        //mainLoop:
+//        mainLoop:
         for (int i = 0; i < frequencies.length; i++) {
             if (peaks[i] < threshold) {
                 peaks[i] = 0;
