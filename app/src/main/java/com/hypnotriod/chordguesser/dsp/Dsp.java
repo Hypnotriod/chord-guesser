@@ -36,7 +36,7 @@ public class Dsp {
     public static final int BAND_PASS_TAPS_NUM = 51;
     public static final double BAND_PASS_TOP = 2000;
     public static final double BAND_PASS_BOTTOM = 20;
-    public static final double SUPPRESS_HARMONICS_FACTOR = 1;
+    public static final double SUPPRESS_HARMONICS_FACTOR = 0.75;
     public static final double SUPPRESS_HARMONICS_FADE = 0.75;
     public static final int SUPPRESS_HARMONICS_DEEP = 3;
 
