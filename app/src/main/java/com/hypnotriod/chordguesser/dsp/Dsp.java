@@ -24,18 +24,18 @@ public class Dsp {
     public static final int CHANNEL_CONFIG = AudioFormat.CHANNEL_IN_MONO;
     public static final int AUDIO_FORMAT = AudioFormat.ENCODING_PCM_16BIT;
     public static final int MIN_INTERNAL_BUFFER_SIZE = AudioRecord.getMinBufferSize(SAMPLE_RATE, CHANNEL_CONFIG, AUDIO_FORMAT);
-    public static final int BUFFER_SIZE = Math.max(MIN_INTERNAL_BUFFER_SIZE, 2048);
+    public static final int BUFFER_SIZE = Math.max(MIN_INTERNAL_BUFFER_SIZE, 8192);
     public static final int CHUNK_SIZE = BUFFER_SIZE / 2;
     public static final double THRESHOLD = 0.1;
     public static final int FREQUENCIES_FUNDAMENTAL_NUM = 4;
-    public static final int FREQUENCIES_TO_ANALYZE_NUM = 32;
-    public static final int MOVING_AVERAGE_FREQUENCIES_MAX = 8;
+    public static final int FREQUENCIES_TO_ANALYZE_NUM = 16;
+    public static final int MOVING_AVERAGE_FREQUENCIES_MAX = 4;
     public static final int MOVING_AVERAGE_WINDOW_START = (MOVING_AVERAGE_FREQUENCIES_MAX / 4);
     public static final int MOVING_AVERAGE_WINDOW_END = (MOVING_AVERAGE_FREQUENCIES_MAX / 4) * 3;
     public static final int MOVING_AVERAGE_WINDOW_SIZE = (MOVING_AVERAGE_FREQUENCIES_MAX / 2);
     public static final int BAND_PASS_TAPS_NUM = 51;
     public static final double BAND_PASS_TOP = 2000;
-    public static final double BAND_PASS_BOTTOM = 20;
+    public static final double BAND_PASS_BOTTOM = 100;
     public static final double SUPPRESS_HARMONICS_FACTOR = 0.75;
     public static final double SUPPRESS_HARMONICS_FADE = 0.75;
     public static final int SUPPRESS_HARMONICS_DEEP = 3;
@@ -59,7 +59,7 @@ public class Dsp {
         for (int i = 0; i < FREQUENCIES_FUNDAMENTAL_NUM; i++) {
             freqBuffList.add(new LinkedList<>());
         }
-        Arrays.fill(dspResult.frequencies, "");
+        Arrays.fill(dspResult.notes, "");
         Arrays.fill(dspResult.cents, "");
     }
 
@@ -102,9 +102,31 @@ public class Dsp {
     }
 
     private void processNextFrequencies(double[] frequencies, double[] peaks) {
+        boolean[] usedIndexes = new boolean[FREQUENCIES_FUNDAMENTAL_NUM];
         for (int i = 0; i < frequencies.length; i++) {
-            processNextFrequency(frequencies[i], peaks[i], i);
+            int index = findNearestAverageFrequencyIndex(frequencies[i], usedIndexes);
+            processNextFrequency(frequencies[i], peaks[i], index);
         }
+    }
+
+    private int findNearestAverageFrequencyIndex(double frequency, boolean[] usedIndexes) {
+        double noteIndexCurrent = NotesUtil.getNoteIndexFractional(frequency);
+        int index = 0;
+        double difference = Integer.MAX_VALUE;
+        while (usedIndexes[index]) {
+            index = (index + 1) % FREQUENCIES_FUNDAMENTAL_NUM;
+        }
+        for (int i = 0; i < dspResult.frequencies.length; i++) {
+            if (usedIndexes[i]) continue;
+            double noteIndex = NotesUtil.getNoteIndexFractional(dspResult.frequencies[i]);
+            double diff = Math.abs(noteIndexCurrent - noteIndex);
+            if (diff < difference && diff < 1) {
+                difference = diff;
+                index = i;
+            }
+        }
+        usedIndexes[index] = true;
+        return index;
     }
 
     private void processNextFrequency(double frequency, double peak, int index) {
@@ -114,7 +136,7 @@ public class Dsp {
         if (frequency == 0) {
             freqBuff.poll();
             if (freqBuff.size() == 0) {
-                dspResult.frequencies[index] = "";
+                dspResult.notes[index] = "";
                 dspResult.cents[index] = "";
             }
             return;
@@ -131,7 +153,8 @@ public class Dsp {
         }
         averageFrequency /= MOVING_AVERAGE_WINDOW_SIZE;
 
-        dspResult.frequencies[index] = NotesUtil.getNoteByFrequency(averageFrequency);
+        dspResult.frequencies[index] = averageFrequency;
+        dspResult.notes[index] = NotesUtil.getNoteByFrequency(averageFrequency);
         dspResult.cents[index] = NotesUtil.getNoteCentsByFrequency(averageFrequency);
     }
 }

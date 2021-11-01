@@ -48,7 +48,7 @@ public class MainActivity extends AppCompatActivity implements DspResultViewer {
 
     public void update(DspResult dspResult) {
         this.runOnUiThread(() -> {
-            txtFrequency.setText(TextUtils.join(" ", dspResult.frequencies));
+            txtFrequency.setText(TextUtils.join(" ", dspResult.notes));
             txtCents.setText(TextUtils.join(" ", dspResult.cents));
         });
     }
