@@ -5,42 +5,22 @@ package com.hypnotriod.chordguesser.dsp.utils;
  */
 
 public class DspUtils {
-    public static void suppressHarmonics(double[] frequencies, double[] peaks, double factor, double fade, int deep, double threshold) {
-        double root;
-        int d;
-        double f;
-        mainLoop:
+    public static void suppressHarmonics(double[] frequencies, double[] peaks, double factor, int deep, double threshold) {
+        double[] peaksOut = new double[peaks.length];
+        System.arraycopy(peaks, 0, peaksOut, 0, peaks.length);
         for (int i = 0; i < frequencies.length; i++) {
-            if (peaks[i] < threshold) {
-                peaks[i] = 0;
-                continue;
-            }
-            root = frequencies[i] * 2;
+            if (frequencies[i] == 0) break;
             for (int j = i + 1; j < frequencies.length; j++) {
-                if (Math.round(frequencies[j] / 4) == Math.round(root / 4)) {
-                    if (peaks[i] < peaks[j] * 0.5) {
-                        peaks[i] -= peaks[j] * factor;
-                        if (peaks[i] < threshold) {
-                            peaks[i] = 0;
-                        }
-                        continue mainLoop;
-                    }
-                    break;
+                if (frequencies[j] == 0) break;
+                double div = frequencies[j] / frequencies[i];
+                if (div > deep || Math.abs(div * 4 - Math.round(div * 4)) > 0.033) {
+                    continue;
                 }
+                peaksOut[j] -= peaks[i] * factor;
             }
-            for (int j = i + 1; j < frequencies.length; j++) {
-                d = deep;
-                f = factor;
-                root = frequencies[i] * 2;
-                while (d-- > 0) {
-                    if (Math.round(frequencies[j] / 4) == Math.round(root / 4)) {
-                        peaks[j] -= peaks[i] * f;
-                        break;
-                    }
-                    root += frequencies[i];
-                    f *= fade;
-                }
-            }
+        }
+        for (int i = 0; i < peaks.length; i++) {
+            peaks[i] = peaksOut[i] < peaks[0] ? 0 : peaksOut[i];
         }
     }
 

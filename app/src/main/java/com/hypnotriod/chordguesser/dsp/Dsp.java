@@ -6,6 +6,7 @@ import android.media.MediaRecorder;
 
 import com.cardinalpeak.Filter;
 import com.hypnotriod.chordguesser.dsp.filter.HannWindow;
+import com.hypnotriod.chordguesser.dsp.filter.Normalizer;
 import com.hypnotriod.chordguesser.dsp.utils.DspUtils;
 import com.hypnotriod.chordguesser.dsp.utils.FftUtils;
 import com.hypnotriod.chordguesser.dsp.utils.NotesUtil;
@@ -33,12 +34,15 @@ public class Dsp {
     public static final int MOVING_AVERAGE_WINDOW_START = (MOVING_AVERAGE_FREQUENCIES_MAX / 4);
     public static final int MOVING_AVERAGE_WINDOW_END = (MOVING_AVERAGE_FREQUENCIES_MAX / 4) * 3;
     public static final int MOVING_AVERAGE_WINDOW_SIZE = (MOVING_AVERAGE_FREQUENCIES_MAX / 2);
+    public static final double NORMALIZER_ATTACK_TIME = 0.1;
+    public static final double NORMALIZER_RELEASE_TIME = 0.2;
+    public static final double NORMALIZER_HOLD_TIME = 0.1;
+    public static final double NORMALIZER_AMP_MAX = 10;
     public static final int BAND_PASS_TAPS_NUM = 51;
-    public static final double BAND_PASS_TOP = 2000;
-    public static final double BAND_PASS_BOTTOM = 100;
-    public static final double SUPPRESS_HARMONICS_FACTOR = 0.75;
-    public static final double SUPPRESS_HARMONICS_FADE = 0.75;
-    public static final int SUPPRESS_HARMONICS_DEEP = 3;
+    public static final double BAND_PASS_TOP = 1760;
+    public static final double BAND_PASS_BOTTOM = 440;
+    public static final double SUPPRESS_HARMONICS_FACTOR = 10;
+    public static final int SUPPRESS_HARMONICS_DEEP = 20;
 
     private final DspResultViewer resultViewer;
     private final DspResult dspResult = new DspResult();
@@ -48,6 +52,8 @@ public class Dsp {
     private final Filter bpFilter = new Filter(Filter.FilterType.BPF, BAND_PASS_TAPS_NUM, CHUNK_SIZE, SAMPLE_RATE, BAND_PASS_BOTTOM, BAND_PASS_TOP);
     private final List<Queue<Double>> freqBuffList = new ArrayList<>();
     private final HannWindow hannWindow = new HannWindow(CHUNK_SIZE);
+
+    private final Normalizer normalizer = new Normalizer(NORMALIZER_ATTACK_TIME, NORMALIZER_RELEASE_TIME, NORMALIZER_HOLD_TIME, NORMALIZER_AMP_MAX, SAMPLE_RATE);
 
     private final double[] real = new double[CHUNK_SIZE];
     private final double[] imaginary = new double[CHUNK_SIZE];
@@ -82,6 +88,7 @@ public class Dsp {
     private void processDsp(byte[] data) {
         PcmConvertUtil.convert16BitMono(data, real);
         Arrays.fill(imaginary, 0);
+        normalizer.process(real);
         bpFilter.process(real);
         hannWindow.process(real);
         fft.fft(real, imaginary);
@@ -94,7 +101,7 @@ public class Dsp {
         double[] peaksFundamental = new double[FREQUENCIES_FUNDAMENTAL_NUM];
 
         FftUtils.fillFrequencies(pow, normPow, frequencies, peaks, SAMPLE_RATE, THRESHOLD);
-        DspUtils.suppressHarmonics(frequencies, peaks, SUPPRESS_HARMONICS_FACTOR, SUPPRESS_HARMONICS_FADE, SUPPRESS_HARMONICS_DEEP, THRESHOLD);
+        DspUtils.suppressHarmonics(frequencies, peaks, SUPPRESS_HARMONICS_FACTOR, SUPPRESS_HARMONICS_DEEP, THRESHOLD);
         DspUtils.fillFundamental(frequenciesFundamental, peaksFundamental, frequencies, peaks);
         DspUtils.selectionSort(frequenciesFundamental, peaksFundamental);
         processNextFrequencies(frequenciesFundamental, peaksFundamental);
